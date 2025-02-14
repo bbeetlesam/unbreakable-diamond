@@ -32,3 +32,7 @@ sf::Vector2f getRandomSpawnPoint(const sf::Vector2f& center, float radiusX, floa
     return sf::Vector2f(center.x + adjustedX, center.y + adjustedY);
 }
 
+sf::Vector2f normalize(const sf::Vector2f& vec) {
+    float length = std::sqrt(vec.x * vec.x + vec.y * vec.y);
+    return length != 0 ? vec / length : sf::Vector2f(0, 0);
+}

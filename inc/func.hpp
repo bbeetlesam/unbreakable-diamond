@@ -17,7 +17,7 @@ void drawCrossLine(sf::RenderWindow& window, sf::Color vertColor = sf::Color::Wh
 /// @brief get random spawn point on a fixed distance pattern (for hand) @param center @param radiusX @param radiusY @param rng @return coordinates
 sf::Vector2f getRandomSpawnPoint(const sf::Vector2f& center, float radiusX, float radiusY, std::mt19937& rng);
 
-/// 
-
+/// Normalize a vector @param vec @return normalized vector
+sf::Vector2f normalize(const sf::Vector2f& vec);
 
 #endif

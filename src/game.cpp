@@ -50,6 +50,7 @@ void Game::initResources(){
 
     // Load game's textures and images
     resources.loadTexture("hand", "assets/img/New Piskel (1).png");
+    resources.loadTexture("arm", "assets/img/New Piskel (3).png");
 
     // Load soundBuffer
     resources.loadSoundBuffer("boom", "assets/sounds/708856__funnyvoices__boomerizer-eu-fx.wav");
@@ -78,20 +79,11 @@ void Game::handleEvents(){
                 windowSize = window.getSize();
             }
             else if(keyPressed->scancode == sf::Keyboard::Scan::R){
-                // circles.clear();
                 std::random_device rd;
                 std::mt19937 rng(rd());
 
                 sf::Vector2f spawnPoint = getRandomSpawnPoint({0.f, 0.f}, windowSize.x*0.8f, windowSize.y*0.85f, rng);
-                float angle = std::atan2(-spawnPoint.y, -spawnPoint.x) * 180 / PI;
-
-                sf::Sprite sprite(resources.getTexture("hand"));
-                sprite.setPosition(spawnPoint);
-                sprite.setOrigin({sprite.getLocalBounds().size.x / 2, sprite.getLocalBounds().size.y / 2});
-                sprite.setScale({1.f, 1.f});
-                sprite.setRotation(sf::degrees(angle + 90.f));
-
-                sprites.push_back(std::move(sprite));
+                hands.push_back(std::make_unique<NormalHand>(spawnPoint, resources.getTexture("arm"), resources.getTexture("hand")));
             }
             else if(keyPressed->scancode == sf::Keyboard::Scan::Z && circles.size() > 0){
                 circles.pop_back();
@@ -145,14 +137,26 @@ void Game::handleEvents(){
 
             assets.getSound("boom").play();
 
-            std::cout << "click (" << moveEvent->position.x << ", " << moveEvent->position.y << ") " << windowSize.x << "x" << windowSize.y << "\n";
+            // std::cout << "click (" << moveEvent->position.x << ", " << moveEvent->position.y << ") " << windowSize.x << "x" << windowSize.y << "\n";
         }
     }
 }
 
 void Game::update(){
+    deltaTime = clock.restart().asSeconds();
+
+    for(auto& hand : hands){
+        hand->update(deltaTime);
+    }
+
+    // Delete hand if inside shield
+    hands.erase(std::remove_if(hands.begin(), hands.end(),
+    [&](const std::unique_ptr<Hand>& hand) {
+        return shield->isHandInside(*hand);
+    }), hands.end());
+
     shield->update(lastMousePos);
-    std::cout << shield->getAngle() << " degrees\n";
+    // std::cout << shield->getAngle() << " degrees\n";
 }
 
 void Game::render(){
@@ -161,9 +165,9 @@ void Game::render(){
     for(const auto& circle : circles){
         window.draw(circle);
     }
-    
-    for(const auto& sprite : sprites){
-        window.draw(sprite);
+
+    for (auto& hand : hands){
+        hand->draw(window);
     }
     
     window.draw(assets.getText("title"));
@@ -179,6 +183,8 @@ void Game::render(){
 void Game::toggleFullscreen(sf::RenderWindow& window){
     isFullscreen = !isFullscreen;
 
+    sf::Vector2f prevCenter = view.getCenter();
+
     sf::VideoMode size = (isFullscreen ? sf::VideoMode(cn::DesktopSize) : sf::VideoMode(cn::InitWindowSize));
     sf::State state = (isFullscreen ? sf::State::Fullscreen : sf::State::Windowed);
 
@@ -193,6 +199,28 @@ void Game::toggleFullscreen(sf::RenderWindow& window){
         view.setSize({to<float>(cn::InitWindowSize.x), to<float>(cn::InitWindowSize.y)});
     }
 
-    view.setCenter({0.f, 0.f});
+    view.setCenter(prevCenter); // Kembalikan posisi center agar tidak berubah
     window.setView(view);
 }
+
+bool ArcShield::isHandInside(const Hand& hand) const {
+    sf::Vector2f handPos = hand.getPositionP();
+    sf::Vector2f toHand = handPos - center;
+    
+    float distance = std::sqrt(toHand.x * toHand.x + toHand.y * toHand.y);
+    float angleToHand = std::atan2(toHand.y, toHand.x) * 180.f / PI;
+    if (angleToHand < 0) angleToHand += 360.f;  // Biar selalu positif
+
+    float leftLimit = currentAngle - (arcAngle / 2);
+    float rightLimit = currentAngle + (arcAngle / 2);
+
+    if (leftLimit < 0) leftLimit += 360.f;
+    if (rightLimit >= 360.f) rightLimit -= 360.f;
+
+    bool withinAngle = (leftLimit < rightLimit)
+        ? (angleToHand >= leftLimit && angleToHand <= rightLimit)
+        : (angleToHand >= leftLimit || angleToHand <= rightLimit);
+
+    return (distance <= radius && withinAngle);
+}
+

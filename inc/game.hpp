@@ -13,8 +13,61 @@
 #include <SFML/System.hpp>
 #include <vector>
 #include <unordered_map>
+#include <optional>
+#include <map>
 #include <cmath>
 #include <memory> // smart pointers unique_ptr
+#include <deque>
+#include <algorithm>
+
+// Base class for Hand objects
+class Hand{
+    public:
+        virtual void update(float deltaTime) = 0;
+        virtual void draw(sf::RenderWindow& window);
+
+        // Getter untuk mendapatkan previousPositions
+        const std::deque<sf::Vector2f>& getPreviousPositions() const { return previousPositions; }
+
+        // Setter untuk mengatur previousPositions setelah toggle fullscreen
+        void setPreviousPositions(const std::deque<sf::Vector2f>& newPositions) { previousPositions = newPositions; }
+        sf::Vector2f getPositionP() const { return position; }
+
+
+    protected:
+        // Hand constructor
+        Hand(sf::Vector2f startPos, const sf::Texture& armTex, const sf::Texture& handTex);
+
+        sf::Vector2f getPosition() const { return position; }
+        sf::Vector2f getDirection() const { return direction; }
+        sf::Vector2f getTargetPos() const { return spawnPos; }
+        float getSpeed() const { return speed; }
+
+        void setPosition(sf::Vector2f newPos) { position = newPos; }
+
+        sf::Vector2f spawnPos;
+
+        unsigned int damage;
+        unsigned int health;
+
+        sf::Vector2f position;
+        sf::Vector2f direction;
+        float rotation;
+        float scale;
+        float speed = 400.0f;
+
+        float segmentSpacing = 60.0f;
+        int maxSegments = 20;
+        std::deque<sf::Vector2f> previousPositions; // Posisi lama untuk lengan
+
+        sf::Texture armTexture;
+        sf::Texture handTexture;
+        sf::Sprite handSprite;
+        std::vector<sf::Sprite> arms;
+
+    private:
+        sf::Vector2f targetPos{0.f, 0.f};
+};
 
 // Class for Shield arc
 class ArcShield{
@@ -27,6 +80,8 @@ class ArcShield{
 
         // Get current angle of the shield in degrees
         float getAngle() const { return currentAngle; }
+
+        bool isHandInside(const Hand& hand) const;
 
     private:
         float radius;
@@ -43,26 +98,11 @@ class ArcShield{
         void generateArc(float rotationAngle = 0.0f);
 };
 
-// Class for Hand object
-class Hand{
+// Class for Normal Hand
+class NormalHand : public Hand{
     public:
-        Hand(const sf::Vector2f& startPos, const sf::Vector2f& targetPos);
-        ~Hand();
-
-    private:
-        sf::Vector2f startPos;
-        sf::Vector2f targetPos;
-        unsigned int damage;
-};
-
-//
-class HardHand : public Hand{
-    public:
-        HardHand(const sf::Vector2f& startPos, const sf::Vector2f& targetPos);
-        ~HardHand();
-
-    private:
-        unsigned int damage;
+        NormalHand(sf::Vector2f startPos, const sf::Texture& armTex, const sf::Texture& handTex);
+        void update(float deltaTime) override;
 };
 
 // Class for Game's logic manager
@@ -75,6 +115,9 @@ class Game{
         void run();
 
     private:
+        ResourceManager resources;
+        ObjectManager assets{resources};
+
         sf::RenderWindow window;
         sf::Vector2u windowSize;
         sf::Image icon;
@@ -84,14 +127,12 @@ class Game{
 
         std::vector<sf::CircleShape> circles;
         std::vector<std::unique_ptr<Hand>> hands;
-        std::vector<sf::Sprite> sprites;
 
         sf::Vector2f lastMousePos;
+        sf::Clock clock;
+        float deltaTime;
 
         std::unique_ptr<ArcShield> shield;
-
-        ResourceManager resources;
-        ObjectManager assets{resources};
 
         // Function to handle events (mouse, input, etc)
         void handleEvents();
