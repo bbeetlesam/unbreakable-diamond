@@ -1,5 +1,5 @@
-#ifndef CONSTANTS_HPP
-#define CONSTANTS_HPP
+#ifndef CONST
+#define CONST
 
 #include <SFML/Graphics.hpp>
 using str = std::string;
@@ -22,4 +22,4 @@ namespace cn{
     constexpr sf::Color BgColor = sf::Color(33, 36, 56);
 }
 
-#endif // CONSTANTS_HPP
+#endif // CONST

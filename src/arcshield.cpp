@@ -59,11 +59,45 @@ void ArcShield::update(sf::Vector2f mousePos){
     currentTheta += ease::linear(alpha) * deltaTheta;
 
     // Convert radian to degree
-    currentAngle = currentTheta * 180 / PI;
+    currentAngle = std::fmod(currentTheta * 180 / PI, 360.0f);
+    if(currentAngle < 0) currentAngle += 360.0f;
 
     generateArc(currentTheta);
 }
 
 void ArcShield::draw(sf::RenderWindow& window){
     window.draw(arc);
+}
+
+////////////////////////////////////////////////////////////////////////////
+
+bool ArcShield::isHandInside(const Hand& hand, float offset) const{
+    sf::Vector2f handPos = hand.getPosition();
+    sf::Vector2f toHand = handPos - center;
+
+    float distance = std::sqrt(toHand.x * toHand.x + toHand.y * toHand.y);
+    float minRadius = radius * 0.8f;
+
+    return (distance <= radius + offset && distance >= minRadius);
+}
+
+bool ArcShield::isHandBlocked(const Hand& hand) const{
+    sf::Vector2f handPos = hand.getPosition();
+    sf::Vector2f toHand = handPos - center;
+
+    float angleToHand = std::atan2(toHand.y, toHand.x) * 180.f / PI;
+    if (angleToHand < 0) angleToHand += 360.f;
+
+    float leftLimit = currentAngle - (arcAngle / 2);
+    float rightLimit = currentAngle + (arcAngle / 2);
+
+    if (leftLimit < 0) leftLimit += 360.f;
+    if (rightLimit >= 360.f) rightLimit -= 360.f;
+
+    // Cek apakah hand dalam jangkauan sudut arc shield
+    bool withinAngle = (leftLimit < rightLimit)
+        ? (angleToHand >= leftLimit && angleToHand <= rightLimit)
+        : (angleToHand >= leftLimit || angleToHand <= rightLimit);
+
+    return withinAngle;
 }

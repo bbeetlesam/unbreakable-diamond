@@ -1,6 +1,7 @@
-/temp
+/.vscode
 /bin
 /lib
+/temp
 CMakelists.txt
 Makefile
-/.vscode
+assets/Untitled.ico

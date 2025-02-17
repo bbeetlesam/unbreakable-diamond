@@ -49,4 +49,4 @@ class ObjectManager{
         std::unordered_map<std::string, sf::Sprite> sprites;
 };
 
-#endif
+#endif // RES

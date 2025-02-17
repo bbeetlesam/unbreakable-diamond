@@ -1,4 +1,7 @@
 #include "game.hpp"
+#include "hand.hpp"
+
+/////////////////////////////////////////////////////////////////////////////////////////
 
 Hand::Hand(sf::Vector2f startPos, const sf::Texture& armTex, const sf::Texture& handTex)
     : scale(1.0f), armTexture(armTex), handTexture(handTex), handSprite(handTex)
@@ -26,7 +29,10 @@ void Hand::draw(sf::RenderWindow& window){
 /////////////////////////////////////////////////////////////////////////////////////////
 
 NormalHand::NormalHand(sf::Vector2f startPos, const sf::Texture& armTex, const sf::Texture& handTex)
-    : Hand(startPos, armTex, handTex) {}
+    : Hand(startPos, armTex, handTex)
+{
+    speed = handSpeed;
+}
 
 void NormalHand::update(float deltaTime){
     // 1. Hitung arah dari posisi sekarang ke target

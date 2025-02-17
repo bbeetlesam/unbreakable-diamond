@@ -1,4 +1,5 @@
 #include "game.hpp"
+#include "hand.hpp"
 
 Game::Game(){
     initResources();
@@ -24,7 +25,6 @@ void Game::run(){
 
 void Game::initData(){
     windowSize = window.getSize();
-
     isFullscreen = false;
 
     // Init view
@@ -33,14 +33,14 @@ void Game::initData(){
     window.setView(view);
 
     // Init shield
-    shield = std::make_unique<ArcShield>(100.f, 75.f, 15.f, sf::Vector2f{0.f, 0.f}, 100);
+    shield = std::make_unique<ArcShield>(125.f, 80.f, 15.f, sf::Vector2f{0.f, 0.f}, 100);
 
     assets.getText("title").setPosition(sf::Vector2f(0.f, 0.f));//(window.mapCoordsToPixel({0.f, 0.f})));
 }
 
 void Game::initResources(){
     // Load game's icon (rlly wantto use ico but sfml didn support it *sad*)
-    if(!icon.loadFromFile("assets/Untitled.png")){
+    if(!icon.loadFromFile("assets/icon.png")){
         std::cerr << "icon didn't load\n";
     }
 
@@ -58,7 +58,7 @@ void Game::initResources(){
     // 
     assets.setText("title", "yoster", cn::WindowName, 50, sf::Color::Cyan);
 
-    //
+    // Set playable sound from soundBuffer
     assets.setSound("boom", "boom");
 }
 
@@ -128,17 +128,17 @@ void Game::handleEvents(){
         }
 
         // If mouse clicked (begin)
-        if(const auto* moveEvent = event->getIf<sf::Event::MouseButtonPressed>()){
-            sf::Vector2f worldPos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
-            sf::CircleShape circle(50u, 40);
-            circle.setPosition({worldPos.x - circle.getRadius(), worldPos.y - circle.getRadius()});
-            circle.setFillColor(sf::Color(25, 25, 200));
-            circles.push_back(std::move(circle));
+        // if(const auto* moveEvent = event->getIf<sf::Event::MouseButtonPressed>()){
+        //     sf::Vector2f worldPos = window.mapPixelToCoords(sf::Mouse::getPosition(window));
+        //     sf::CircleShape circle(50u, 40);
+        //     circle.setPosition({worldPos.x - circle.getRadius(), worldPos.y - circle.getRadius()});
+        //     circle.setFillColor(sf::Color(25, 25, 200));
+        //     circles.push_back(std::move(circle));
 
-            assets.getSound("boom").play();
+        //     assets.getSound("boom").play();
 
-            // std::cout << "click (" << moveEvent->position.x << ", " << moveEvent->position.y << ") " << windowSize.x << "x" << windowSize.y << "\n";
-        }
+        //     std::cout << "click (" << moveEvent->position.x << ", " << moveEvent->position.y << ") " << windowSize.x << "x" << windowSize.y << "\n";
+        // }
     }
 }
 
@@ -152,11 +152,16 @@ void Game::update(){
     // Delete hand if inside shield
     hands.erase(std::remove_if(hands.begin(), hands.end(),
     [&](const std::unique_ptr<Hand>& hand) {
-        return shield->isHandInside(*hand);
+        return (shield->isHandInside(*hand, 125.f) && shield->isHandBlocked(*hand));
     }), hands.end());
 
+    // hands.erase(std::remove_if(hands.begin(), hands.end(),
+    // [&](const std::unique_ptr<Hand>& hand) {
+    //     return shield->isHandInside(*hand, -10.f);
+    // }), hands.end());
+
     shield->update(lastMousePos);
-    // std::cout << shield->getAngle() << " degrees\n";
+    std::cout << shield->getAngle() << " degrees\n";
 }
 
 void Game::render(){
@@ -169,7 +174,7 @@ void Game::render(){
     for (auto& hand : hands){
         hand->draw(window);
     }
-    
+
     window.draw(assets.getText("title"));
 
     shield->draw(window);
@@ -199,28 +204,7 @@ void Game::toggleFullscreen(sf::RenderWindow& window){
         view.setSize({to<float>(cn::InitWindowSize.x), to<float>(cn::InitWindowSize.y)});
     }
 
-    view.setCenter(prevCenter); // Kembalikan posisi center agar tidak berubah
+    view.setCenter(prevCenter);
     window.setView(view);
-}
-
-bool ArcShield::isHandInside(const Hand& hand) const {
-    sf::Vector2f handPos = hand.getPositionP();
-    sf::Vector2f toHand = handPos - center;
-    
-    float distance = std::sqrt(toHand.x * toHand.x + toHand.y * toHand.y);
-    float angleToHand = std::atan2(toHand.y, toHand.x) * 180.f / PI;
-    if (angleToHand < 0) angleToHand += 360.f;  // Biar selalu positif
-
-    float leftLimit = currentAngle - (arcAngle / 2);
-    float rightLimit = currentAngle + (arcAngle / 2);
-
-    if (leftLimit < 0) leftLimit += 360.f;
-    if (rightLimit >= 360.f) rightLimit -= 360.f;
-
-    bool withinAngle = (leftLimit < rightLimit)
-        ? (angleToHand >= leftLimit && angleToHand <= rightLimit)
-        : (angleToHand >= leftLimit || angleToHand <= rightLimit);
-
-    return (distance <= radius && withinAngle);
 }
 

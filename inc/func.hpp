@@ -20,4 +20,4 @@ sf::Vector2f getRandomSpawnPoint(const sf::Vector2f& center, float radiusX, floa
 /// Normalize a vector @param vec @return normalized vector
 sf::Vector2f normalize(const sf::Vector2f& vec);
 
-#endif
+#endif // FUNC
