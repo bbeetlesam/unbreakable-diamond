@@ -48,12 +48,18 @@ void Game::initResources(){
     resources.loadFont("zerovelo", "assets/font/zerovelo.ttf");
     resources.loadFont("yoster", "assets/font/yoster.ttf");
 
-    // Load game's textures and images
-    resources.loadTexture("hand", "assets/img/New Piskel (1).png");
-    resources.loadTexture("arm", "assets/img/New Piskel (3).png");
+    // Load game's textures (images)
+    resources.loadTexture("hand", "assets/img/hand-normal.png");
+    resources.loadTexture("arm", "assets/img/arm-normal.png");
+    resources.loadTexture("diamond", "assets/img/diamond.png");
 
     // Load soundBuffer
     resources.loadSoundBuffer("boom", "assets/sounds/708856__funnyvoices__boomerizer-eu-fx.wav");
+
+    // Set Diamond in-the-middle sprite
+    assets.setSprite("dm", "diamond");
+    assets.getSprite("dm").setOrigin(sf::Vector2f{assets.getSprite("dm").getGlobalBounds().size.x/2, assets.getSprite("dm").getGlobalBounds().size.y/2});
+    assets.getSprite("dm").setScale(sf::Vector2f{0.75f, 0.75f});
 
     // 
     assets.setText("title", "yoster", cn::WindowName, 50, sf::Color::Cyan);
@@ -147,25 +153,23 @@ void Game::update(){
 
     for(auto& hand : hands){
         hand->update(deltaTime);
+        std::cout << shield->getHandPenetLevel(*hand) << "\n";
     }
 
-    // Delete hand if inside shield
+    // Delete hand if hits shield
     hands.erase(std::remove_if(hands.begin(), hands.end(),
     [&](const std::unique_ptr<Hand>& hand) {
-        return (shield->isHandInside(*hand, 125.f) && shield->isHandBlocked(*hand));
+        return (shield->getHandPenetLevel(*hand) == 1 && shield->isHandBlocked(*hand));
     }), hands.end());
 
-    // hands.erase(std::remove_if(hands.begin(), hands.end(),
-    // [&](const std::unique_ptr<Hand>& hand) {
-    //     return shield->isHandInside(*hand, -10.f);
-    // }), hands.end());
-
     shield->update(lastMousePos);
-    std::cout << shield->getAngle() << " degrees\n";
+    // std::cout << shield->getAngle() << " degrees\n";
 }
 
 void Game::render(){
     window.clear(cn::BgColor);
+
+    // window.setView(view);
 
     for(const auto& circle : circles){
         window.draw(circle);
@@ -178,8 +182,10 @@ void Game::render(){
     window.draw(assets.getText("title"));
 
     shield->draw(window);
+
+    window.draw(assets.getSprite("dm"));
     
-    drawCrossLine(window);
+    // drawCrossLine(window);
     window.display();
 }
 
@@ -207,4 +213,3 @@ void Game::toggleFullscreen(sf::RenderWindow& window){
     view.setCenter(prevCenter);
     window.setView(view);
 }
-

@@ -69,16 +69,17 @@ void ArcShield::draw(sf::RenderWindow& window){
     window.draw(arc);
 }
 
-////////////////////////////////////////////////////////////////////////////
-
-bool ArcShield::isHandInside(const Hand& hand, float offset) const{
-    sf::Vector2f handPos = hand.getPosition();
+int ArcShield::getHandPenetLevel(const Hand& hand, float radiusOffset) const{
+    sf::Vector2f handPos = hand.getAdvancedPosition(hand.getHandTexture().getSize().y/2);
     sf::Vector2f toHand = handPos - center;
 
     float distance = std::sqrt(toHand.x * toHand.x + toHand.y * toHand.y);
-    float minRadius = radius * 0.8f;
-
-    return (distance <= radius + offset && distance >= minRadius);
+    float innerRadius = radius - 15.f;
+    // return (distance <= radius + radiusOffset && distance >= minRadius);
+    
+    if (distance > radius + radiusOffset) return -1;
+    if (distance >= innerRadius) return 1;
+    return 0;
 }
 
 bool ArcShield::isHandBlocked(const Hand& hand) const{

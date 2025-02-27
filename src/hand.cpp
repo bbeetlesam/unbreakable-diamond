@@ -26,6 +26,17 @@ void Hand::draw(sf::RenderWindow& window){
     window.draw(handSprite);
 }
 
+sf::Vector2f Hand::getAdvancedPosition(float advanceDist) const{
+    float angleRad = this->getRotation() * PI / 180.0f; // Konversi ke radian
+    sf::Vector2f handPos = this->getPosition();
+    
+    // Geser posisi berdasarkan arah rotasi
+    handPos.x += std::cos(angleRad) * advanceDist;
+    handPos.y += std::sin(angleRad) * advanceDist;
+
+    return handPos;
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////
 
 NormalHand::NormalHand(sf::Vector2f startPos, const sf::Texture& armTex, const sf::Texture& handTex)
@@ -89,3 +100,15 @@ void NormalHand::update(float deltaTime){
 
 /////////////////////////////////////////////////////////////////////////////////////////
 
+// FastHand::FastHand(sf::Vector2f startPos, const sf::Texture& armTex, const sf::Texture& handTex)
+//     : Hand(startPos, armTex, handTex)
+// {
+//     speed = handSpeed;
+// }
+
+// void FastHand::update(float deltatime){
+//     // 1. Hitung arah dari posisi sekarang ke target
+//     sf::Vector2f direction = getTargetPos() - getPosition();
+// }
+
+/////////////////////////////////////////////////////////////////////////////////////////

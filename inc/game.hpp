@@ -27,6 +27,10 @@ class Hand{
         virtual void draw(sf::RenderWindow& window);
     
         sf::Vector2f getPosition() const { return position; }
+        float getRotation() const { return rotation; }
+        sf::Texture getHandTexture() const { return handTexture; }
+
+        sf::Vector2f getAdvancedPosition(float advanceDist) const;
 
     protected:
         // Hand constructor
@@ -46,7 +50,7 @@ class Hand{
         sf::Vector2f position;
         sf::Vector2f direction;
         float rotation;
-        float scale;
+        float scale; // sprite scale size
         float speed;
 
         float segmentSpacing = 60.0f;
@@ -74,7 +78,8 @@ class ArcShield{
         // Get current angle of the shield in degrees
         float getAngle() const { return currentAngle; }
 
-        bool isHandInside(const Hand& hand, float offset = 0.f) const;
+        /// Get hand penetration level @return -1 if Hand is outside arc, @return 1 if Hand is inside first arc layer, @return 0 if Hand passes the first arc layer
+        int getHandPenetLevel(const Hand& hand, float offset = 0.f) const;
         bool isHandBlocked(const Hand& hand) const;
 
     private:
@@ -108,7 +113,10 @@ class Game{
         sf::RenderWindow window;
         sf::Vector2u windowSize;
         sf::Image icon;
+
         sf::View view;
+        // sf::View uiView;
+
         bool isFullscreen;
         bool isRunning;
 

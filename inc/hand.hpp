@@ -10,7 +10,7 @@ class NormalHand : public Hand{
         void update(float deltaTime) override;
     
     private:
-        const float handSpeed = 350.0f;
+        const float handSpeed = 200.0f; //350
 };
 
 // Class for Fast Hand
